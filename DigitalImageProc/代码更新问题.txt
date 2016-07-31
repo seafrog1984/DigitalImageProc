@@ -116,3 +116,25 @@ src = imread((LPSTR)(LPCSTR)m_path);
 
 二、打开视频
 
+1. 暂停视频
+
+单独窗口可以起作用，MFC关联窗口无效
+
+	// 按任意键停止视频播放
+	if (waitKey(500)>=0)
+		stop= true;
+
+
+2. 打开视频源
+
+//【1】读入视频  
+ VideoCapture cap;  
+ //【1a】从视频文件载入视频  
+ //cap.open("VID_20151206_095030.mp4"); 
+ //【1b】从本地安装的摄像头载入视频  
+ cap.open(0);  
+ //【1c】从网络摄像头载入视频  
+ //cap.open("rtsp://218.204.223.237:554/live/1/0547424F573B085C/gsfp90ef4k0a6iap.sdp"); //公开的RTSP测试服务器  
+ //cap.open("rtsp://218.204.223.237:554/live/1/66251FC11353191F/e7ooqwcfbqjoo80j.sdp"); //公开的RTSP测试服务器 拱北口岸珠海过澳门大厅  
+ //cap.open("rtsp://218.204.223.237:554/live/1/67A7572844E51A64/f68g2mj7wjua3la7.sdp"); //公开的RTSP测试服务器 横琴口岸入境大厅  
+ //cap.open("rtsp://admin:@192.168.254.136:10554/tcp/av0_1"); //本地网络中的摄像头，我用来测试的摄像头，但是获取不到open的时候有问题；

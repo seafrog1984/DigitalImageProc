@@ -211,6 +211,8 @@ void CDigitalImageProcDlg::OnBnClickedOpen()
 void CDigitalImageProcDlg::OnBnClickedVideo()
 {
 	// TODO:  在此添加控件通知处理程序代码
+
+	//【1a】从视频文件载入视频 
 	CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, NULL);
 	dlg.m_ofn.lpstrTitle = _T("打开视频文件"); //对话框标题
 	dlg.m_ofn.lpstrInitialDir = "F:\\"; //默认打开路径
@@ -220,9 +222,17 @@ void CDigitalImageProcDlg::OnBnClickedVideo()
 		return;
 	m_path = dlg.GetPathName();
 
-	VideoCapture capture((LPSTR)(LPCSTR)m_path);
-	//0 open default camera
-	//VideoCapture capture(0);
+	VideoCapture capture;
+	capture.open((LPSTR)(LPCSTR)m_path);
+ 
+	//【1b】从本地安装的摄像头载入视频 0 open default camera
+	//	capture.open(0);
+	//【1c】从网络摄像头载入视频  
+	//capture.open("rtsp://218.204.223.237:554/live/1/0547424F573B085C/gsfp90ef4k0a6iap.sdp"); //公开的RTSP测试服务器  
+	//capture.open("rtsp://218.204.223.237:554/live/1/66251FC11353191F/e7ooqwcfbqjoo80j.sdp"); //公开的RTSP测试服务器 拱北口岸珠海过澳门大厅  
+	//capture.open("rtsp://218.204.223.237:554/live/1/67A7572844E51A64/f68g2mj7wjua3la7.sdp"); //公开的RTSP测试服务器 横琴口岸入境大厅  
+
+
 	//检查视频是否打开
 	if (!capture.isOpened())
 	{
@@ -248,15 +258,13 @@ void CDigitalImageProcDlg::OnBnClickedVideo()
 				break;
 			//在窗口中显示图像
 			
-			resize(frame, img, Size(rect.Width(), rect.Height()), 0, 0);
-			imshow("view", img);
+			imshow("Video", frame);
 			// 按任意键停止视频播放
-			//	if (waitKey(500)>=0)
-			//	    stop= true;
-			waitKey(300);
+				if (waitKey(300)>=0)
+				    stop= true;
 		}
 		// 关闭视频文件
-			
+		
 		capture.release();
 	}
 }
