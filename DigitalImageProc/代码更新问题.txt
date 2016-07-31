@@ -1,0 +1,60 @@
+一. 打开图像及显示
+1. 定义成员变量  ***dlg.h中
+public:
+	
+	CString m_path;
+	Mat src;
+
+#pragma once
+//包含头文件
+#include<opencv2/core/core.hpp> //Mat的定义及操作
+
+//名字空间
+using namespace cv;
+2. 关联OpenCV窗口与Picture控件
+在BOOL CDigitalImageProcDlg::OnInitDialog()中添加
+
+	namedWindow("view", WINDOW_AUTOSIZE);
+	HWND hWnd = (HWND)cvGetWindowHandle("view");
+	HWND hParent = ::GetParent(hWnd);
+	::SetParent(hWnd, GetDlgItem(IDC_PIC)->m_hWnd);
+	::ShowWindow(hParent, SW_HIDE);
+3. DigitalImageProcDlg.cpp 中包含头文件
+#include <opencv2/imgproc/imgproc.hpp>  //resize函数
+#include<opencv2/highgui/highgui.hpp>  //imread, imshow 等函数
+OpenCV的模块包括下面这些：
+　　1、core — 基础核心模块，定义了一些需要用到的基本的数据结构，包括多为数组Mat等其他的模块需要的核心对象。
+　　2、imgproc — 图像处理模块，包括了线性和非线性的图像滤波（Linear and Non-Linear Image Filtering）、几何图像变换（如，缩放（Resize）、仿射与透视变换（affine and perspective warping）、generic table-based remapping）、颜色空间变换（ color space conversion）和直方图（histograms）等。
+　　3、video — 视频分析模块，包含运动估计（Motion Estimation）、背景消除/背景差分（Background Subtraction）和物体跟踪（Object Tracking）算法。
+　　4、calib3d — 3D图像处理方面的一个模块，包含了基本的多视角几何算法（basic multiple-view geometry algorithms）、单体和立体相机的标定（Single and Stereo Camera Calibration）、对象姿态估计（Object Pose Estimation）、双目立体匹配（Stereo Correspondence）算法和元素的三维重建（Elements of 3D Reconstruction）。
+　　5、features2d — 特征检测、描述、匹配算法模块，包含了显著特征检测算法（salient feature detectors）、描述算子（descriptors）和算子匹配算法（descriptor matchers）。
+　　6、objdetect — 目标检测模块，包括实物检测和一些预定义的物体的检测如人脸、眼睛、杯子、行人、汽车等。
+　　7、highgui — UI接口模块，为视频捕捉（Video Capturing）、图像和视频编码（Image and Video Codecs）等功能提供易用的UI接口。
+　　8、gpu — gpu模块，用于支持其他模块的GPU加速算法。
+　　9、ml — 机器学习模块，提供了多种基本和经典的机器学习算法，用于支持各种计算机视觉功能的实现。
+
+4.	字符集问题
+
+需安装多字节字符集vc_mbcsmfc.exe ，项目-属性-常规-默认选项-字符集  选择多字节字符集
+
+//多字节字符集下 CString 转 char*  (LPSTR)(LPCSTR)
+	src = imread((LPSTR)(LPCSTR)m_path);
+
+	/****** Unicode字符集下 CString 转 char*  ******/
+	/*
+	int nLength = m_path.GetLength();
+	int nBytes = WideCharToMultiByte(CP_ACP, 0, m_path, nLength, NULL, 0, NULL, NULL);
+	char* VoicePath = new char[nBytes + 1];
+	memset(VoicePath, 0, nLength + 1);
+	WideCharToMultiByte(CP_OEMCP, 0, m_path, nLength, VoicePath, nBytes, NULL, NULL);
+	VoicePath[nBytes] = 0;
+	src = imread(VoicePath);
+	*/
+	/************************************************/
+5. 打开图像文件夹
+	CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, NULL);
+	dlg.m_ofn.lpstrTitle = _T("打开图像文件"); //对话框标题
+	dlg.m_ofn.lpstrInitialDir = "F:\\"; //默认打开路径
+	dlg.m_ofn.lpstrFilter = "bmp (*.bmp)\0*.bmp\0 jpg (*.jpg)\0*.jpg\0 All Files (*.*) \0*.*\0\0"; //打开文件类型，vs2013 用\0 取代之前的|
+
+
