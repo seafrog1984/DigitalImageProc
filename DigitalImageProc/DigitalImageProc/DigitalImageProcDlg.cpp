@@ -69,6 +69,7 @@ BEGIN_MESSAGE_MAP(CDigitalImageProcDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_OPEN, &CDigitalImageProcDlg::OnBnClickedOpen)
+	ON_BN_CLICKED(IDC_VIDEO, &CDigitalImageProcDlg::OnBnClickedVideo)
 END_MESSAGE_MAP()
 
 
@@ -197,11 +198,65 @@ void CDigitalImageProcDlg::OnBnClickedOpen()
 	*/
 	/************************************************/
 
-	Mat img;
+	Mat img;  //保存缩放后的图像
 	CRect rect;
-	GetDlgItem(IDC_PIC)->GetClientRect(&rect);
+	GetDlgItem(IDC_PIC)->GetClientRect(&rect); //获取图像显示区
 
 	resize(src, img, Size(rect.Width(), rect.Height()), 0, 0);
 		
 	imshow("view", img);
+}
+
+
+void CDigitalImageProcDlg::OnBnClickedVideo()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, NULL);
+	dlg.m_ofn.lpstrTitle = _T("打开视频文件"); //对话框标题
+	dlg.m_ofn.lpstrInitialDir = "F:\\"; //默认打开路径
+	dlg.m_ofn.lpstrFilter = "avi (*.avi)\0*.avi\0 All Files (*.*) \0*.*\0\0"; //打开文件类型
+
+	if (dlg.DoModal() != IDOK)             // 判断是否获得图片         
+		return;
+	m_path = dlg.GetPathName();
+
+	VideoCapture capture((LPSTR)(LPCSTR)m_path);
+	//0 open default camera
+	//VideoCapture capture(0);
+	//检查视频是否打开
+	if (!capture.isOpened())
+	{
+		MessageBox(_T("Can't open video!"));
+	}
+	else
+	{
+		// 得到帧率
+		double rate = capture.get(CV_CAP_PROP_FPS);
+		bool stop(false);
+		Mat frame; // 现在的视频帧
+		Mat img;//保存缩放后的图像
+		CRect rect;
+		GetDlgItem(IDC_PIC)->GetClientRect(&rect);
+
+		// 两帧之间的间隔时间
+		//    int delay= 1000/rate;
+		// 循环播放所有的帧
+		while (!stop)
+		{
+			// 读下一帧
+			if (!capture.read(frame))
+				break;
+			//在窗口中显示图像
+			
+			resize(frame, img, Size(rect.Width(), rect.Height()), 0, 0);
+			imshow("view", img);
+			// 按任意键停止视频播放
+			//	if (waitKey(500)>=0)
+			//	    stop= true;
+			waitKey(300);
+		}
+		// 关闭视频文件
+			
+		capture.release();
+	}
 }

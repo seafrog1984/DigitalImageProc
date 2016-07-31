@@ -41,4 +41,5 @@ public:
 	Mat src;
 
 
+	afx_msg void OnBnClickedVideo();
 };
