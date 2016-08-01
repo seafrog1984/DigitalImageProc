@@ -42,4 +42,9 @@ public:
 
 
 	afx_msg void OnBnClickedVideo();
+	int m_width;
+	int m_height;
+	afx_msg void OnBnClickedResize();
+	double m_angle;
+	afx_msg void OnBnClickedRotation();
 };
