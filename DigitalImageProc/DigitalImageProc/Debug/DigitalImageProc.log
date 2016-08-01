@@ -1,4 +1,4 @@
-﻿生成启动时间为 2016/8/1 17:53:28。
+﻿生成启动时间为 2016/8/1 19:47:26。
      1>项目“E:\Mycode\GitStorage\DigitalImageProc\DigitalImageProc\DigitalImageProc.vcxproj”在节点 2 上(Build 个目标)。
      1>ClCompile:
          D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _WINDOWS /D _DEBUG /D _MBCS /D _AFXDLL /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"Debug\DigitalImageProc.pch" /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt DigitalImageProcDlg.cpp
@@ -13,4 +13,4 @@
 
 生成成功。
 
-已用时间 00:00:01.71
+已用时间 00:00:01.75

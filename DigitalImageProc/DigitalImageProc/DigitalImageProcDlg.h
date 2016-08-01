@@ -47,4 +47,5 @@ public:
 	afx_msg void OnBnClickedResize();
 	double m_angle;
 	afx_msg void OnBnClickedRotation();
+	afx_msg void OnBnClickedLinear();
 };

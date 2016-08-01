@@ -78,6 +78,7 @@ BEGIN_MESSAGE_MAP(CDigitalImageProcDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_VIDEO, &CDigitalImageProcDlg::OnBnClickedVideo)
 	ON_BN_CLICKED(IDC_RESIZE, &CDigitalImageProcDlg::OnBnClickedResize)
 	ON_BN_CLICKED(IDC_ROTATION, &CDigitalImageProcDlg::OnBnClickedRotation)
+	ON_BN_CLICKED(IDC_LINEAR, &CDigitalImageProcDlg::OnBnClickedLinear)
 END_MESSAGE_MAP()
 
 
@@ -304,8 +305,8 @@ void CDigitalImageProcDlg::OnBnClickedRotation()
 	// 计算旋转后图像尺寸
 	double a = sin(m_angle  * CV_PI / 180);
 	double b = cos(m_angle  * CV_PI / 180);
-	int width = src.size().width;
-	int height = src.size().height;
+	int width = src.cols;
+	int height = src.rows;
 	int width_rotate = int(height * fabs(a) + width * fabs(b));
 	int height_rotate = int(width * fabs(a) + height * fabs(b));
 
@@ -322,6 +323,43 @@ void CDigitalImageProcDlg::OnBnClickedRotation()
 	/// 旋转图像
 	warpAffine(src, rotate_dst, rot_mat, Size(width_rotate, height_rotate));
 
+	namedWindow("旋转后图像");
 	imshow("旋转后图像", rotate_dst);
 
+}
+
+
+void CDigitalImageProcDlg::OnBnClickedLinear()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	Mat g_src, dst(src.rows,src.cols,CV_8U);
+	uchar *p_src, *p_dst;
+
+	cvtColor(src, g_src, CV_BGR2GRAY);
+
+	for (int i = 0; i<g_src.rows; i++)//线性拉伸
+	{
+		p_src = g_src.ptr<uchar>(i);
+		p_dst = dst.ptr<uchar>(i);
+		for (int j = 0; j<g_src.cols; j++)
+		{
+			int tmp = p_src[j];
+
+			if (tmp<64)
+			{
+				p_dst[j] = tmp / 2;
+			}
+			else if (tmp<192)
+			{
+				p_dst[j] = tmp + tmp / 2;
+			}
+			else
+			{
+				p_dst[j] = tmp / 2;
+			}
+		}
+	}
+
+	namedWindow("线性拉伸");
+	imshow("线性拉伸", dst);
 }
