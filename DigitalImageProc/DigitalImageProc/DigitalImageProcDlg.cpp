@@ -58,6 +58,7 @@ CDigitalImageProcDlg::CDigitalImageProcDlg(CWnd* pParent /*=NULL*/)
 	, m_width(0)
 	, m_height(0)
 	, m_angle(0)
+	, m_shear_ratio(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -68,6 +69,7 @@ void CDigitalImageProcDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_WIDTH, m_width);
 	DDX_Text(pDX, IDC_HEIGHT, m_height);
 	DDX_Text(pDX, IDC_ANGLE, m_angle);
+	DDX_Text(pDX, IDC_SHEAR_RATIO, m_shear_ratio);
 }
 
 BEGIN_MESSAGE_MAP(CDigitalImageProcDlg, CDialogEx)
@@ -79,6 +81,8 @@ BEGIN_MESSAGE_MAP(CDigitalImageProcDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_RESIZE, &CDigitalImageProcDlg::OnBnClickedResize)
 	ON_BN_CLICKED(IDC_ROTATION, &CDigitalImageProcDlg::OnBnClickedRotation)
 	ON_BN_CLICKED(IDC_LINEAR, &CDigitalImageProcDlg::OnBnClickedLinear)
+	ON_BN_CLICKED(IDC_HSHEAR, &CDigitalImageProcDlg::OnBnClickedHshear)
+	ON_BN_CLICKED(IDC_VSHEAR, &CDigitalImageProcDlg::OnBnClickedVshear)
 END_MESSAGE_MAP()
 
 
@@ -332,34 +336,133 @@ void CDigitalImageProcDlg::OnBnClickedRotation()
 void CDigitalImageProcDlg::OnBnClickedLinear()
 {
 	// TODO:  在此添加控件通知处理程序代码
-	Mat g_src, dst(src.rows,src.cols,CV_8U);
-	uchar *p_src, *p_dst;
-
+	Mat g_src, dst;
+	
 	cvtColor(src, g_src, CV_BGR2GRAY);
+
+	dst.create(src.size(), g_src.type());
 
 	for (int i = 0; i<g_src.rows; i++)//线性拉伸
 	{
-		p_src = g_src.ptr<uchar>(i);
-		p_dst = dst.ptr<uchar>(i);
+	
 		for (int j = 0; j<g_src.cols; j++)
 		{
-			int tmp = p_src[j];
+			int tmp = g_src.at<uchar>(i,j);
 
 			if (tmp<64)
 			{
-				p_dst[j] = tmp / 2;
+				dst.at<uchar>(i,j) = tmp / 2;
 			}
 			else if (tmp<192)
 			{
-				p_dst[j] = tmp + tmp / 2;
+				dst.at<uchar>(i, j) = tmp + tmp / 2;
 			}
 			else
 			{
-				p_dst[j] = tmp / 2;
+				dst.at<uchar>(i, j) = tmp / 2;
 			}
 		}
 	}
 
 	namedWindow("线性拉伸");
 	imshow("线性拉伸", dst);
+}
+
+
+void CDigitalImageProcDlg::OnBnClickedHshear()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+
+	Mat g_src, dst;
+
+	cvtColor(src, g_src, CV_BGR2GRAY);
+
+	//计算错切后图像大小
+	double ratio = m_shear_ratio;
+	int dst_wid;
+	int dst_hei;
+
+	if (ratio < 0)
+	{
+		dst_wid = g_src.cols + g_src.rows*ratio*(-1);
+	}
+	else 
+	{
+		dst_wid = g_src.cols + g_src.rows*ratio;
+	}
+
+	dst_hei = g_src.rows;
+
+	dst.create(Size(dst_wid, dst_hei), g_src.type());
+
+	for (int i = 0; i<g_src.rows; i++)
+	{
+		if (ratio >= 0)
+		for (int j = 0; j<g_src.cols; j++)
+		{
+			dst.at<uchar>(i, j + i*ratio) = g_src.at<uchar>(i, j);
+		}
+		else
+		{
+			int offset = (-1)*ratio*g_src.rows;
+			for (int j = g_src.cols - 1; j >= 0; j--)
+			{
+				dst.at<uchar>(i, j + i*ratio + offset) = g_src.at<uchar>(i, j);
+			}
+		}
+	}
+
+	namedWindow("水平错切");
+	imshow("水平错切", dst);
+
+}
+
+
+void CDigitalImageProcDlg::OnBnClickedVshear()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+
+	Mat g_src, dst;
+
+	cvtColor(src, g_src, CV_BGR2GRAY);
+
+	//计算错切后图像大小
+	double ratio = m_shear_ratio;
+	int dst_wid;
+	int dst_hei;
+
+	if (ratio < 0)
+	{
+		dst_hei = g_src.rows + g_src.cols*ratio*(-1);
+	}
+	else
+	{
+		dst_hei = g_src.rows + g_src.cols*ratio;
+	}
+
+	dst_wid = g_src.cols;
+
+	dst.create(Size(dst_wid, dst_hei), g_src.type());
+
+	for (int i = 0; i<g_src.rows; i++)
+	{
+		if (ratio >= 0)
+		for (int j = 0; j<g_src.cols; j++)
+		{
+			dst.at<uchar>(i+j*ratio, j) = g_src.at<uchar>(i, j);
+		}
+		else
+		{
+			int offset = (-1)*ratio*g_src.cols;
+			for (int j = g_src.cols - 1; j >= 0; j--)
+			{
+				dst.at<uchar>(i+j*ratio+offset, j) = g_src.at<uchar>(i, j);
+			}
+		}
+	}
+
+	namedWindow("垂直错切");
+	imshow("垂直错切", dst);
 }
