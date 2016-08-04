@@ -55,6 +55,10 @@ END_MESSAGE_MAP()
 
 CDigitalImageProcDlg::CDigitalImageProcDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CDigitalImageProcDlg::IDD, pParent)
+	, m_width(0)
+	, m_height(0)
+	, m_angle(0)
+	, m_shear_ratio(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -62,6 +66,10 @@ CDigitalImageProcDlg::CDigitalImageProcDlg(CWnd* pParent /*=NULL*/)
 void CDigitalImageProcDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Text(pDX, IDC_WIDTH, m_width);
+	DDX_Text(pDX, IDC_HEIGHT, m_height);
+	DDX_Text(pDX, IDC_ANGLE, m_angle);
+	DDX_Text(pDX, IDC_SHEAR_RATIO, m_shear_ratio);
 }
 
 BEGIN_MESSAGE_MAP(CDigitalImageProcDlg, CDialogEx)
@@ -70,6 +78,11 @@ BEGIN_MESSAGE_MAP(CDigitalImageProcDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_OPEN, &CDigitalImageProcDlg::OnBnClickedOpen)
 	ON_BN_CLICKED(IDC_VIDEO, &CDigitalImageProcDlg::OnBnClickedVideo)
+	ON_BN_CLICKED(IDC_RESIZE, &CDigitalImageProcDlg::OnBnClickedResize)
+	ON_BN_CLICKED(IDC_ROTATION, &CDigitalImageProcDlg::OnBnClickedRotation)
+	ON_BN_CLICKED(IDC_LINEAR, &CDigitalImageProcDlg::OnBnClickedLinear)
+	ON_BN_CLICKED(IDC_HSHEAR, &CDigitalImageProcDlg::OnBnClickedHshear)
+	ON_BN_CLICKED(IDC_VSHEAR, &CDigitalImageProcDlg::OnBnClickedVshear)
 END_MESSAGE_MAP()
 
 
@@ -267,4 +280,189 @@ void CDigitalImageProcDlg::OnBnClickedVideo()
 		
 		capture.release();
 	}
+}
+
+
+void CDigitalImageProcDlg::OnBnClickedResize()
+{
+	// TODO:  在此添加控件通知处理程序代码
+
+	UpdateData(TRUE);
+
+	Mat dst;
+
+	resize(src, dst, Size(m_width, m_height), 0, 0);
+
+	imshow("缩放后图像", dst);
+
+}
+
+
+void CDigitalImageProcDlg::OnBnClickedRotation()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+
+	Mat rot_mat(2, 3, CV_32FC1);//旋转变换矩阵
+	Mat rotate_dst;
+	
+	// 计算旋转后图像尺寸
+	double a = sin(m_angle  * CV_PI / 180);
+	double b = cos(m_angle  * CV_PI / 180);
+	int width = src.cols;
+	int height = src.rows;
+	int width_rotate = int(height * fabs(a) + width * fabs(b));
+	int height_rotate = int(width * fabs(a) + height * fabs(b));
+
+	//计算图像旋转变换矩阵
+	Point center = Point(src.cols / 2, src.rows / 2);
+	double angle = m_angle;
+	double scale = 1;
+	rot_mat = getRotationMatrix2D(center, angle, scale); 
+
+	// 修改坐标偏移
+	rot_mat.at<double>(0, 2) += (width_rotate - width) / 2;    
+	rot_mat.at<double>(1, 2) += (height_rotate - height) / 2; 
+
+	/// 旋转图像
+	warpAffine(src, rotate_dst, rot_mat, Size(width_rotate, height_rotate));
+
+	namedWindow("旋转后图像");
+	imshow("旋转后图像", rotate_dst);
+
+}
+
+
+void CDigitalImageProcDlg::OnBnClickedLinear()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	Mat g_src, dst;
+	
+	cvtColor(src, g_src, CV_BGR2GRAY);
+
+	dst.create(src.size(), g_src.type());
+
+	for (int i = 0; i<g_src.rows; i++)//线性拉伸
+	{
+	
+		for (int j = 0; j<g_src.cols; j++)
+		{
+			int tmp = g_src.at<uchar>(i,j);
+
+			if (tmp<64)
+			{
+				dst.at<uchar>(i,j) = tmp / 2;
+			}
+			else if (tmp<192)
+			{
+				dst.at<uchar>(i, j) = tmp + tmp / 2;
+			}
+			else
+			{
+				dst.at<uchar>(i, j) = tmp / 2;
+			}
+		}
+	}
+
+	namedWindow("线性拉伸");
+	imshow("线性拉伸", dst);
+}
+
+
+void CDigitalImageProcDlg::OnBnClickedHshear()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+
+	Mat g_src, dst;
+
+	cvtColor(src, g_src, CV_BGR2GRAY);
+
+	//计算错切后图像大小
+	double ratio = m_shear_ratio;
+	int dst_wid;
+	int dst_hei;
+
+	if (ratio < 0)
+	{
+		dst_wid = g_src.cols + g_src.rows*ratio*(-1);
+	}
+	else 
+	{
+		dst_wid = g_src.cols + g_src.rows*ratio;
+	}
+
+	dst_hei = g_src.rows;
+
+	dst.create(Size(dst_wid, dst_hei), g_src.type());
+
+	for (int i = 0; i<g_src.rows; i++)
+	{
+		if (ratio >= 0)
+		for (int j = 0; j<g_src.cols; j++)
+		{
+			dst.at<uchar>(i, j + i*ratio) = g_src.at<uchar>(i, j);
+		}
+		else
+		{
+			int offset = (-1)*ratio*g_src.rows;
+			for (int j = g_src.cols - 1; j >= 0; j--)
+			{
+				dst.at<uchar>(i, j + i*ratio + offset) = g_src.at<uchar>(i, j);
+			}
+		}
+	}
+
+	namedWindow("水平错切");
+	imshow("水平错切", dst);
+
+}
+
+
+void CDigitalImageProcDlg::OnBnClickedVshear()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+
+	Mat g_src, dst;
+
+	cvtColor(src, g_src, CV_BGR2GRAY);
+
+	//计算错切后图像大小
+	double ratio = m_shear_ratio;
+	int dst_wid;
+	int dst_hei;
+
+	if (ratio < 0)
+	{
+		dst_hei = g_src.rows + g_src.cols*ratio*(-1);
+	}
+	else
+	{
+		dst_hei = g_src.rows + g_src.cols*ratio;
+	}
+
+	dst_wid = g_src.cols;
+
+	dst.create(Size(dst_wid, dst_hei), g_src.type());
+
+	for (int i = 0; i<g_src.rows; i++)
+	{
+		if (ratio >= 0)
+		for (int j = 0; j<g_src.cols; j++)
+		{
+			dst.at<uchar>(i+j*ratio, j) = g_src.at<uchar>(i, j);
+		}
+		else
+		{
+			int offset = (-1)*ratio*g_src.cols;
+			for (int j = g_src.cols - 1; j >= 0; j--)
+			{
+				dst.at<uchar>(i+j*ratio+offset, j) = g_src.at<uchar>(i, j);
+			}
+		}
+	}
+
+	namedWindow("垂直错切");
+	imshow("垂直错切", dst);
 }
