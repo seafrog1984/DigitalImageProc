@@ -83,6 +83,8 @@ BEGIN_MESSAGE_MAP(CDigitalImageProcDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_LINEAR, &CDigitalImageProcDlg::OnBnClickedLinear)
 	ON_BN_CLICKED(IDC_HSHEAR, &CDigitalImageProcDlg::OnBnClickedHshear)
 	ON_BN_CLICKED(IDC_VSHEAR, &CDigitalImageProcDlg::OnBnClickedVshear)
+	ON_BN_CLICKED(IDC_HMIRROR, &CDigitalImageProcDlg::OnBnClickedHmirror)
+	ON_BN_CLICKED(IDC_VMIRROR, &CDigitalImageProcDlg::OnBnClickedVmirror)
 END_MESSAGE_MAP()
 
 
@@ -374,45 +376,66 @@ void CDigitalImageProcDlg::OnBnClickedHshear()
 	// TODO:  在此添加控件通知处理程序代码
 	UpdateData(TRUE);
 
-	Mat g_src, dst;
-
-	cvtColor(src, g_src, CV_BGR2GRAY);
-
 	//计算错切后图像大小
 	double ratio = m_shear_ratio;
 	int dst_wid;
 	int dst_hei;
-
+	
 	if (ratio < 0)
 	{
-		dst_wid = g_src.cols + g_src.rows*ratio*(-1);
+		dst_wid = src.cols + src.rows*ratio*(-1);
 	}
 	else 
 	{
-		dst_wid = g_src.cols + g_src.rows*ratio;
+		dst_wid = src.cols + src.rows*ratio;
 	}
 
-	dst_hei = g_src.rows;
+	dst_hei = src.rows;
 
-	dst.create(Size(dst_wid, dst_hei), g_src.type());
+	Mat dst;
 
-	for (int i = 0; i<g_src.rows; i++)
+	dst.create(Size(dst_wid, dst_hei), src.type());
+
+	switch (src.channels())
 	{
-		if (ratio >= 0)
-		for (int j = 0; j<g_src.cols; j++)
+	case 1:
+		for (int i = 0; i<src.rows; i++)
 		{
-			dst.at<uchar>(i, j + i*ratio) = g_src.at<uchar>(i, j);
-		}
-		else
-		{
-			int offset = (-1)*ratio*g_src.rows;
-			for (int j = g_src.cols - 1; j >= 0; j--)
+			if (ratio >= 0)
+			for (int j = 0; j<src.cols; j++)
 			{
-				dst.at<uchar>(i, j + i*ratio + offset) = g_src.at<uchar>(i, j);
+				dst.at<uchar>(i, j + i*ratio) = src.at<uchar>(i, j);
+			}
+			else
+			{
+				int offset = (-1)*ratio*src.rows;
+				for (int j = src.cols - 1; j >= 0; j--)
+				{
+					dst.at<uchar>(i, j + i*ratio + offset) = src.at<uchar>(i, j);
+				}
 			}
 		}
+	case 3:
+		for (int i = 0; i<src.rows; i++)
+		{
+			if (ratio >= 0)
+			for (int j = 0; j<src.cols; j++)
+			{
+				dst.at<Vec3b>(i, j + i*ratio) = src.at<Vec3b>(i, j);
+			}
+			else
+			{
+				int offset = (-1)*ratio*src.rows;
+				for (int j = src.cols - 1; j >= 0; j--)
+				{
+					dst.at<Vec3b>(i, j + i*ratio + offset) = src.at<Vec3b>(i, j);
+				}
+			}
+		}
+	default:
+		break;
 	}
-
+	
 	namedWindow("水平错切");
 	imshow("水平错切", dst);
 
@@ -424,10 +447,6 @@ void CDigitalImageProcDlg::OnBnClickedVshear()
 	// TODO:  在此添加控件通知处理程序代码
 	UpdateData(TRUE);
 
-	Mat g_src, dst;
-
-	cvtColor(src, g_src, CV_BGR2GRAY);
-
 	//计算错切后图像大小
 	double ratio = m_shear_ratio;
 	int dst_wid;
@@ -435,34 +454,138 @@ void CDigitalImageProcDlg::OnBnClickedVshear()
 
 	if (ratio < 0)
 	{
-		dst_hei = g_src.rows + g_src.cols*ratio*(-1);
+		dst_hei = src.rows + src.cols*ratio*(-1);
 	}
 	else
 	{
-		dst_hei = g_src.rows + g_src.cols*ratio;
+		dst_hei = src.rows + src.cols*ratio;
 	}
 
-	dst_wid = g_src.cols;
+	dst_wid = src.cols;
 
-	dst.create(Size(dst_wid, dst_hei), g_src.type());
+	Mat dst;
 
-	for (int i = 0; i<g_src.rows; i++)
+	dst.create(Size(dst_wid, dst_hei), src.type());
+
+	switch (src.channels())
 	{
-		if (ratio >= 0)
-		for (int j = 0; j<g_src.cols; j++)
+	case 1:
+		for (int i = 0; i<src.rows; i++)
 		{
-			dst.at<uchar>(i+j*ratio, j) = g_src.at<uchar>(i, j);
-		}
-		else
-		{
-			int offset = (-1)*ratio*g_src.cols;
-			for (int j = g_src.cols - 1; j >= 0; j--)
+			if (ratio >= 0)
+			for (int j = 0; j<src.cols; j++)
 			{
-				dst.at<uchar>(i+j*ratio+offset, j) = g_src.at<uchar>(i, j);
+				dst.at<uchar>(i + j*ratio, j) = src.at<uchar>(i, j);
+			}
+			else
+			{
+				int offset = (-1)*ratio*src.rows;
+				for (int j = src.cols - 1; j >= 0; j--)
+				{
+					dst.at<uchar>(i + j*ratio + offset, j) = src.at<uchar>(i, j);
+				}
 			}
 		}
+	case 3:
+		for (int i = 0; i<src.rows; i++)
+		{
+			if (ratio >= 0)
+			for (int j = 0; j<src.cols; j++)
+			{
+				dst.at<Vec3b>(i + j*ratio, j) = src.at<Vec3b>(i, j);
+			}
+			else
+			{
+				int offset = (-1)*ratio*src.rows;
+				for (int j = src.cols - 1; j >= 0; j--)
+				{
+					dst.at<Vec3b>(i + j*ratio + offset, j) = src.at<Vec3b>(i, j);
+				}
+			}
+		}
+	default:
+		break;
 	}
 
 	namedWindow("垂直错切");
 	imshow("垂直错切", dst);
+}
+
+
+void CDigitalImageProcDlg::OnBnClickedHmirror()
+{
+	// TODO:  在此添加控件通知处理程序代码
+
+	Mat dst;
+
+	dst.create(src.rows, src.cols, src.type());
+
+	int rows = src.rows;
+	int cols = src.cols;
+
+	switch (src.channels())
+	{
+	case 1:
+		for (int i = 0; i < rows; i++)
+		{
+			for (int j = 0; j < cols; j++)
+			{
+				dst.at<uchar>(i,j) = src.at<uchar>(i,cols - 1 - j);
+			}
+		}
+		break;
+	case 3:
+		for (int i = 0; i < rows; i++)
+		{
+			for (int j = 0; j < cols; j++)
+			{
+				dst.at<Vec3b>(i,j) = src.at<Vec3b>(i,cols - 1 - j);
+			}
+		}
+		break;
+	default:
+		break;
+	}
+
+	namedWindow("水平镜像");
+	imshow("水平镜像", dst);
+}
+
+
+void CDigitalImageProcDlg::OnBnClickedVmirror()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	Mat dst;
+
+	dst.create(src.rows, src.cols, src.type());
+
+	int rows = src.rows;
+	int cols = src.cols;
+
+	switch (src.channels())
+	{
+	case 1:
+		for (int i = 0; i < rows; i++)
+		{
+			for (int j = 0; j < cols; j++)
+			{
+				dst.at<uchar>(i, j) = src.at<uchar>(rows-1-i, j);
+			}
+		}
+		break;
+	case 3:
+		for (int i = 0; i < rows; i++)
+		{
+			for (int j = 0; j < cols; j++)
+			{
+				dst.at<Vec3b>(i, j) = src.at<Vec3b>(rows-1-i, j);
+			}
+		}
+		break;
+	default:
+		break;
+	}
+
+	namedWindow("垂直镜像");
+	imshow("垂直镜像", dst);
 }

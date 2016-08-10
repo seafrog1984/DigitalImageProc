@@ -51,4 +51,6 @@ public:
 	afx_msg void OnBnClickedHshear();
 	double m_shear_ratio;
 	afx_msg void OnBnClickedVshear();
+	afx_msg void OnBnClickedHmirror();
+	afx_msg void OnBnClickedVmirror();
 };
